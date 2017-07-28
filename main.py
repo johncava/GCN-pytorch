@@ -1,5 +1,7 @@
 from reader import *
 import numpy as np
+import torch
+from torch.autograd import Variable
 
 def preprocess(A):
     # Get size of the adjacency matrix
@@ -34,3 +36,45 @@ x , y = read_data('karate.data', 'label.data')
 A , D = preprocess(x)
 print A
 print D
+
+FloatTensor = torch.FloatTensor
+
+# Turn the input and output into FloatTensors for the Neural Network
+x = Variable(FloatTensor(x), requires_grad=False)
+y = Variable(FloatTensor(y), requires_grad=False)
+A = torch.from_numpy(A)
+A = A.float()
+A = Variable(A, requires_grad=False)
+D = torch.from_numpy(D)
+D = D.float()
+D = Variable(D, requires_grad=False)
+
+# Create random tensor weights
+W1 = Variable(torch.randn(34, 34).type(FloatTensor), requires_grad=True)
+W2 = Variable(torch.randn(34, 2).type(FloatTensor), requires_grad=True)
+W3 = Variable(torch.randn(2, 1).type(FloatTensor), requires_grad=True)
+
+learning_rate = 1e-6
+for t in range(5000):
+
+    # TODO: Add activation function to each hidden layer
+
+    hidden_layer_1 = D.mm(A).mm(D).mm(x).mm(W1)
+    hidden_layer_2 = D.mm(A).mm(D).mm(hidden_layer_1).mm(W2)
+    y_pred = D.mm(A).mm(D).mm(hidden_layer_2).mm(W3)
+    #y_pred = x.mm(w1).clamp(min=0).mm(w2)
+
+    loss = (y_pred - y).pow(2).sum()
+    print(t, loss.data[0])
+
+    loss.backward()
+
+    # Update weights using gradient descent
+    W1.data -= learning_rate * W1.grad.data
+    W2.data -= learning_rate * W2.grad.data
+    W3.data -= learning_rate * W3.grad.data
+
+    # Manually zero the gradients after updating weights
+    W1.grad.data.zero_()
+    W2.grad.data.zero_()
+    W3.grad.data.zero_()
