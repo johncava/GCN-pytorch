@@ -2,6 +2,7 @@ from reader import *
 import numpy as np
 import torch
 from torch.autograd import Variable
+import torch.nn.functional as F
 
 def preprocess(A):
     # Get size of the adjacency matrix
@@ -57,12 +58,9 @@ W3 = Variable(torch.randn(2, 1).type(FloatTensor), requires_grad=True)
 learning_rate = 1e-6
 for t in range(5000):
 
-    # TODO: Add activation function to each hidden layer
-
-    hidden_layer_1 = D.mm(A).mm(D).mm(x).mm(W1)
-    hidden_layer_2 = D.mm(A).mm(D).mm(hidden_layer_1).mm(W2)
-    y_pred = D.mm(A).mm(D).mm(hidden_layer_2).mm(W3)
-    #y_pred = x.mm(w1).clamp(min=0).mm(w2)
+    hidden_layer_1 = F.relu(D.mm(A).mm(D).mm(x).mm(W1))
+    hidden_layer_2 = F.relu(D.mm(A).mm(D).mm(hidden_layer_1).mm(W2))
+    y_pred = F.relu(D.mm(A).mm(D).mm(hidden_layer_2).mm(W3))
 
     loss = (y_pred - y).pow(2).sum()
     print(t, loss.data[0])
